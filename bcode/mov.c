@@ -48,7 +48,7 @@ void gen_mov(struct ins *ins)
 			{
 				reg_f2q(op1.tab->reg+4);
 			}
-			if(op2.tab->class!=9&&op1.tab->class==9)
+			else if(op2.tab->class!=9&&op1.tab->class==9)
 			{
 				reg_q2f(op1.tab->reg+4);
 			}
@@ -60,7 +60,7 @@ void gen_mov(struct ins *ins)
 			{
 				reg_f2q(op1.tab->reg+4);
 			}
-			if(op2.tab->class!=9&&op1.tab->class==9)
+			else if(op2.tab->class!=9&&op1.tab->class==9)
 			{
 				reg_q2f(op1.tab->reg+4);
 			}
@@ -111,7 +111,7 @@ void gen_mov(struct ins *ins)
 				{
 					reg_f2q(1);
 				}
-				if(op2.tab->class!=9&&op1.tab->class==9)
+				else if(op2.tab->class!=9&&op1.tab->class==9)
 				{
 					reg_q2f(1);
 				}

@@ -200,6 +200,21 @@ void gen_basic_op(struct ins *ins,char *op)
 					return;
 				}
 			}
+			if(!strcmp(op,"lsl")||!strcmp(op,"lsr")||!strcmp(op,"asr"))
+			{
+				if(op3.type==2&&op3.value<64)
+				{
+					outs(op);
+					outs(" ");
+					out_reg64(op1.tab->reg+4);
+					outs(",");
+					out_reg64(op2.tab->reg+4);
+					outs(",#");
+					op_out_const(7,&op3);
+					outs("\n");
+					return;
+				}
+			}
 			outs("mov64 x1,");
 			op_out_const(7,&op3);
 			outs("\n");

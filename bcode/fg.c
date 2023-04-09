@@ -1,4 +1,4 @@
-#define REGS 24
+#define REGS 25
 struct ins
 {
 	char *args[4];

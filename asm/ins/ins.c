@@ -198,6 +198,7 @@ void ins_write(char *input)
 int ins_write_mov64(struct ins_args *args,long priv)
 {
 	unsigned int ins;
+	unsigned long n,c;
 	if(args->reg1==63)
 	{
 		return 1;
@@ -216,53 +217,28 @@ int ins_write_mov64(struct ins_args *args,long priv)
 		swrite(&ins,4);
 		return 0;
 	}
-	if(args->imm<=0xffffffff)
+	n=args->imm;
+	c=n&0xffff;
+	ins=0xd2800000|c<<5|args->reg1;
+	swrite(&ins,4);
+	n>>=16;
+	if(c=n&0xffff)
 	{
-		ins=0xd2800000|(args->imm&0xffff)<<5|args->reg1;
+		ins=0xf2a00000|c<<5|args->reg1;
 		swrite(&ins,4);
-		ins=0xd2800000|(args->imm>>16&0xffff)<<5|28;
-		swrite(&ins,4);
-		ins=0xd370bf9c;
-		swrite(&ins,4);
-		ins=0xaa1c0000|(unsigned int)args->reg1<<5|args->reg1;
-		swrite(&ins,4);
-		return 0;
 	}
-	if(args->imm>=0xffffffff00000000)
+	n>>=16;
+	if(c=n&0xffff)
 	{
-		args->imm=~args->imm;
-		ins=0xd2800000|(args->imm&0xffff)<<5|args->reg1;
+		ins=0xf2c00000|c<<5|args->reg1;
 		swrite(&ins,4);
-		ins=0xd2800000|(args->imm>>16&0xffff)<<5|28;
-		swrite(&ins,4);
-		ins=0xd370bf9c;
-		swrite(&ins,4);
-		ins=0xaa1c0000|(unsigned int)args->reg1<<5|args->reg1;
-		swrite(&ins,4);
-		ins=0xaa2003e0|args->reg1|(unsigned int)args->reg1<<16;
-		swrite(&ins,4);
-		return 0;
 	}
-	ins=0xd2800000|(args->imm&0xffff)<<5|args->reg1;
-	swrite(&ins,4);
-	ins=0xd2800000|(args->imm>>16&0xffff)<<5|28;
-	swrite(&ins,4);
-	ins=0xd370bf9c;
-	swrite(&ins,4);
-	ins=0xaa1c0000|(unsigned int)args->reg1<<5|args->reg1;
-	swrite(&ins,4);
-	ins=0xd2800000|(args->imm>>32&0xffff)<<5|28;
-	swrite(&ins,4);
-	ins=0xd3607f9c;
-	swrite(&ins,4);
-	ins=0xaa1c0000|(unsigned int)args->reg1<<5|args->reg1;
-	swrite(&ins,4);
-	ins=0xd2800000|(args->imm>>48&0xffff)<<5|28;
-	swrite(&ins,4);
-	ins=0xd3503f9c;
-	swrite(&ins,4);
-	ins=0xaa1c0000|(unsigned int)args->reg1<<5|args->reg1;
-	swrite(&ins,4);
+	n>>=16;
+	if(c=n&0xffff)
+	{
+		ins=0xf2e00000|c<<5|args->reg1;
+		swrite(&ins,4);
+	}
 	return 0;
 }
 void ins_init(void)

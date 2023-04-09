@@ -2,7 +2,7 @@ void gen_branch(struct ins *ins,char *op_1,char *op_2)
 {
 	struct operand op1,op2;
 	int class1,class2;
-	int sign,c;
+	int sign,c,s;
 	c=0;
 	if(ins->count_args<4)
 	{
@@ -96,69 +96,150 @@ void gen_branch(struct ins *ins,char *op_1,char *op_2)
 	{
 		reg_ext(op2.tab->reg+4,op2.tab->class,c);
 	}
-	if(class1==1)
+	s=0;
+	if(class1==1&&c!=9)
 	{
-		outs("mov x1,");
-		out_reg64(op1.tab->reg+4);
-		outs("\n");
-	}
-	else if(class1==0)
-	{
-		op_mem_ldst("ldr",&op1,1);
-	}
-	else if(class1==2)
-	{
-		outs("mov64 x1,");
-		op_out_const(c,&op1);
-		outs("\n");
-	}
-	else if(class1==3)
-	{
-		op_calculate_addr(&op1,1);
-	}
-	if(class2==1)
-	{
-		outs("mov x2,");
-		out_reg64(op2.tab->reg+4);
-		outs("\n");
-	}
-	else if(class2==0)
-	{
-		op_mem_ldst("ldr",&op2,2);
-	}
-	else if(class2==2)
-	{
-		outs("mov64 x2,");
-		op_out_const(c,&op2);
-		outs("\n");
-	}
-	else if(class2==3)
-	{
-		op_calculate_addr(&op2,2);
-	}
-	if(c==9)
-	{
-		if(class1==2||class1==3||op1.tab->class==9)
+		if(class2==1)
 		{
-			outs("fmov d1,x1\n");
+			outs("subs xzr,");
+			out_reg64(op1.tab->reg+4);
+			outs(",");
+			out_reg64(op2.tab->reg+4);
+			outs("\n");
+			s=1;
+		}
+		if(class2==2)
+		{
+			if(op2.type==2&&op2.value<4096)
+			{
+				outs("subs xzr,");
+				out_reg64(op1.tab->reg+4);
+				outs(",#");
+				op_out_const(7,&op2);
+				outs("\n");
+				s=1;
+			}
+			if(op2.type==2&&op2.value>0xfffffffffffff000)
+			{
+				outs("adds xzr,");
+				out_reg64(op1.tab->reg+4);
+				outs(",#");
+				out_num64(-op2.value);
+				outs("\n");
+				s=1;
+			}
+		}
+		if(class2==0)
+		{
+			op_mem_ldst("ldr",&op2,2);
+			outs("subs xzr,");
+			out_reg64(op1.tab->reg+4);
+			outs(",x2\n");
+			s=1;
+		}
+	}
+	if(class1==0&&c!=9)
+	{
+		if(class2==1)
+		{
+			op_mem_ldst("ldr",&op1,1);
+			outs("subs xzr,");
+			out_reg64(1);
+			outs(",");
+			out_reg64(op2.tab->reg+4);
+			outs("\n");
+			s=1;
+		}
+		if(class2==2)
+		{
+			if(op2.type==2&&op2.value<4096)
+			{
+				op_mem_ldst("ldr",&op1,1);
+				outs("subs xzr,");
+				out_reg64(1);
+				outs(",#");
+				op_out_const(7,&op2);
+				outs("\n");
+				s=1;
+			}
+			if(op2.type==2&&op2.value>=0xfffffffffffff000)
+			{
+				op_mem_ldst("ldr",&op1,1);
+				outs("adds xzr,");
+				out_reg64(1);
+				outs(",#");
+				out_num64(-op2.value);
+				outs("\n");
+				s=1;
+			}
+		}
+	}
+	if(!s)
+	{
+		if(class1==1)
+		{
+			outs("mov x1,");
+			out_reg64(op1.tab->reg+4);
+			outs("\n");
+		}
+		else if(class1==0)
+		{
+			op_mem_ldst("ldr",&op1,1);
+		}
+		else if(class1==2)
+		{
+			outs("mov64 x1,");
+			op_out_const(c,&op1);
+			outs("\n");
+		}
+		else if(class1==3)
+		{
+			op_calculate_addr(&op1,1);
+		}
+		if(class2==1)
+		{
+			outs("mov x2,");
+			out_reg64(op2.tab->reg+4);
+			outs("\n");
+		}
+		else if(class2==0)
+		{
+			op_mem_ldst("ldr",&op2,2);
+		}
+		else if(class2==2)
+		{
+			outs("mov64 x2,");
+			op_out_const(c,&op2);
+			outs("\n");
+		}
+		else if(class2==3)
+		{
+			op_calculate_addr(&op2,2);
+		}
+		if(c==9)
+		{
+			if(class1==2||class1==3||op1.tab->class==9)
+			{
+				outs("fmov d1,x1\n");
+			}
+			else
+			{
+				outs("scvtf d1,x1\n");
+			}
+			if(class2==2||class2==3||op2.tab->class==9)
+			{
+				outs("fmov d2,x2\n");
+			}
+			else
+			{
+				outs("scvtf d2,x2\n");
+			}
+			outs("fcmp d1,d2\n");
 		}
 		else
 		{
-			outs("scvtf d1,x1\n");
+			outs("subs xzr,x1,x2\n");
 		}
-		if(class2==2||class2==3||op2.tab->class==9)
-		{
-			outs("fmov d2,x2\n");
-		}
-		else
-		{
-			outs("scvtf d2,x2\n");
-		}
-		outs("fcmp d1,d2\n");
-	}
-	else
-	{
-		outs("subs xzr,x1,x2\n");
 	}
 	if(sign)
 	{
@@ -171,5 +252,4 @@ void gen_branch(struct ins *ins,char *op_1,char *op_2)
 	outs(" @_$LB");
 	outs(ins->args[3]);
 	outs("\n");
-	last_store_valid=0;
 }

@@ -75,6 +75,7 @@ int main(int argc,char **argv)
 	{
 		str=skip_spaces(l->str);
 		l->ins_len=0;
+		l->ins_buf2=0;
 		l->needs_recompile=0;
 		if(*str&&*str!='#')
 		{
@@ -132,6 +133,8 @@ int main(int argc,char **argv)
 				else
 				{
 					l->ins_len=0;
+					free(l->ins_buf2);
+					l->ins_buf2=0;
 					if(*str=='.')
 					{
 						parse_pseudo_op(str+1);
