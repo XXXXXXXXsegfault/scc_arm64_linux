@@ -1,3 +1,128 @@
+struct ins *branch_end(struct ins *ins)
+{
+	while(ins)
+	{
+		if(ins->op)
+		{
+			break;
+		}
+		if(ins->count_args==1&&!strcmp(ins->args[0],"endf"))
+		{
+			break;
+		}
+		ins=ins->next;
+	}
+	return ins;
+}
+int branch_optimize(struct ins *ins,char *op)
+{
+	struct ins *start,*middle,*end,*prev;
+	int n,type;
+	start=ins;
+	n=5;
+	type=0;
+	if(!ins)
+	{
+		return 0;
+	}
+	prev=ins;
+	ins=ins->next;
+	while(n)
+	{
+		if(!ins)
+		{
+			return 0;
+		}
+		if(ins->count_args==2&&!strcmp(ins->args[0],"label"))
+		{
+			if(ins==start->branch)
+			{
+				type=1;
+				break;
+			}
+			return 0;
+		}
+		if(ins->op==8)
+		{
+			end=ins->branch;
+			break;
+		}
+		if(ins->op!=0&&ins->op!=12)
+		{
+			return 0;
+		}
+		prev=ins;
+		ins=ins->next;
+		--n;
+	}
+	if(n==0||!ins)
+	{
+		return 0;
+	}
+	if(type==0)
+	{
+		ins=ins->next;
+	}
+	middle=ins;
+	if(start->branch!=ins)
+	{
+		return 0;
+	}
+	n=5;
+	if(type==0)
+	{
+		if(!ins)
+		{
+			return 0;
+		}
+		ins=ins->next;
+		while(n)
+		{
+			if(!ins)
+			{
+				return 0;
+			}
+			if(branch_end(ins)==branch_end(end))
+			{
+				break;
+			}
+			if(ins->count_args==2&&!strcmp(ins->args[0],"label"))
+			{
+				return 0;
+			}
+			if(ins->op!=0&&ins->op!=12)
+			{
+				return 0;
+			}
+			ins=ins->next;
+			--n;
+		}
+	}
+	n=1;
+	ins=start;
+	if(type==1)
+	{
+		end=middle;
+	}
+	while(ins&&ins!=end)
+	{
+		if(ins->op==12)
+		{
+			ins->bo=n;
+			ins->cond=op+1;
+		}
+		if(ins==middle)
+		{
+			n=2;
+		}
+		if(ins->op==8)
+		{
+			ins->count_args=0;
+		}
+		ins=ins->next;
+	}
+	return 1;
+}
 void gen_branch(struct ins *ins,char *op_1,char *op_2)
 {
 	struct operand op1,op2;
@@ -243,10 +368,18 @@ void gen_branch(struct ins *ins,char *op_1,char *op_2)
 	}
 	if(sign)
 	{
+		if(branch_optimize(ins,op_1))
+		{
+			return;
+		}
 		outs(op_1);
 	}
 	else
 	{
+		if(branch_optimize(ins,op_2))
+		{
+			return;
+		}
 		outs(op_2);
 	}
 	outs(" @_$LB");

@@ -21,6 +21,8 @@ struct ins
 	unsigned short int mark3;
 	long int off;
 	long arg_map[REGS];
+	char *cond;
+	int bo;
 	struct ins *branch;
 	struct ins *next;
 } *ins_head,*ins_end;
@@ -322,6 +324,7 @@ void ins_add(char *str)
 	node->line=current_line;
 	node->count_args=0;
 	node->op=0;
+	node->bo=0;
 	node->used_regs=0;
 	node->is_const[0]=0;
 	node->is_const[1]=0;
